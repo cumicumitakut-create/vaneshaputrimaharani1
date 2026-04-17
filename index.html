@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trash to Treasure Pro</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  text-align: center;
+  background: linear-gradient(to bottom, #87ceeb, #4caf50);
+  color: white;
+}
+
+/* HEADER */
+.header {
+  padding: 10px;
+}
+
+#score, #timer, #level {
+  margin: 5px;
+  font-size: 18px;
+}
+
+/* PLAYER */
+.player {
+  font-size: 40px;
+  animation: bounce 1s infinite alternate;
+}
+
+@keyframes bounce {
+  from { transform: translateY(0px); }
+  to { transform: translateY(-10px); }
+}
+
+/* GAME AREA */
+.game-area {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.trash {
+  padding: 12px;
+  margin: 8px;
+  background: white;
+  color: black;
+  border-radius: 10px;
+  cursor: grab;
+  transition: 0.2s;
+}
+
+.trash:hover {
+  transform: scale(1.1);
+}
+
+/* BIN */
+.bin-container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.bin {
+  width: 140px;
+  height: 140px;
+  margin: 10px;
+  line-height: 140px;
+  border-radius: 15px;
+  font-weight: bold;
+}
+
+.organik { background: green; }
+.anorganik { background: blue; }
+
+.bin.hover {
+  border: 3px solid yellow;
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+  .bin {
+    width: 120px;
+    height: 120px;
+    line-height: 120px;
+  }
+}
+
+/* BUTTON */
+button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: orange;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <h1>🌱 Trash to Treasure 🌱</h1>
+  <div class="player">🧑‍🌾</div>
+  <div id="level">Level: 1</div>
+  <div id="score">Skor: 0</div>
+  <div id="timer">Waktu: 30</div>
+</div>
+
+<div class="game-area" id="gameArea"></div>
+
+<div class="bin-container">
+  <div class="bin organik" data-bin="organik">Organik</div>
+  <div class="bin anorganik" data-bin="anorganik">Anorganik</div>
+</div>
+
+<button onclick="startGame()">Mulai Game</button>
+
+<!-- SOUND -->
+<audio id="correctSound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
+<audio id="wrongSound" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
+
+<script>
+let score = 0;
+let time = 30;
+let level = 1;
+let draggedItem = null;
+let timerInterval;
+
+// DATA SAMPAH
+const trashData = [
+  { name: "🍃 Daun", type: "organik" },
+  { name: "🍎 Sisa Makanan", type: "organik" },
+  { name: "🧴 Botol", type: "anorganik" },
+  { name: "🥫 Kaleng", type: "anorganik" },
+  { name: "🛍 Plastik", type: "anorganik" },
+  { name: "🌿 Rumput", type: "organik" }
+];
+
+// START GAME
+function startGame() {
+  score = 0;
+  level = 1;
+  loadLevel();
+}
+
+// LOAD LEVEL
+function loadLevel() {
+  document.getElementById("gameArea").innerHTML = "";
+  document.getElementById("level").innerText = "Level: " + level;
+  document.getElementById("score").innerText = "Skor: " + score;
+
+  time = 20 + level * 5;
+  startTimer();
+
+  let items = [...trashData].sort(() => 0.5 - Math.random()).slice(0, level + 2);
+
+  items.forEach(item => {
+    let div = document.createElement("div");
+    div.className = "trash";
+    div.innerText = item.name;
+    div.setAttribute("draggable", true);
+    div.setAttribute("data-type", item.type);
+
+    div.addEventListener("dragstart", () => {
+      draggedItem = div;
+    });
+
+    document.getElementById("gameArea").appendChild(div);
+  });
+}
+
+// BIN
+document.querySelectorAll(".bin").forEach(bin => {
+
+  bin.addEventListener("dragover", e => {
+    e.preventDefault();
+    bin.classList.add("hover");
+  });
+
+  bin.addEventListener("dragleave", () => {
+    bin.classList.remove("hover");
+  });
+
+  bin.addEventListener("drop", () => {
+    bin.classList.remove("hover");
+
+    if (!draggedItem) return;
+
+    let correct = draggedItem.getAttribute("data-type");
+    let target = bin.getAttribute("data-bin");
+
+    if (correct === target) {
+      score += 10;
+      document.getElementById("correctSound").play();
+    } else {
+      score -= 5;
+      document.getElementById("wrongSound").play();
+    }
+
+    document.getElementById("score").innerText = "Skor: " + score;
+    draggedItem.remove();
+
+    // NEXT LEVEL kalau habis
+    if (document.querySelectorAll(".trash").length === 0) {
+      level++;
+      setTimeout(loadLevel, 1000);
+    }
+  });
+});
+
+// TIMER
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    time--;
+    document.getElementById("timer").innerText = "Waktu: " + time;
+
+    if (time <= 0) {
+      clearInterval(timerInterval);
+      alert("Game Over! Skor: " + score);
+    }
+  }, 1000);
+}
+</script>
+
+</body>
+</html>
